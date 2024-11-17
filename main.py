@@ -5,10 +5,10 @@ def main(training_file, test_file):
     # read csv file
     with open(training_file, 'r') as f:
         reader = csv.reader(f)
-        data = list(reader)
-        data_array = np.array(data)
+        train_data = list(reader)
+        train_data = np.array(train_data)
     
-    print(data_array)
+    print(train_data)
 
     # call JAL-AM model, train, and test it
 
