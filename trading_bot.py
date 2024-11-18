@@ -2,7 +2,13 @@ import torch
 import numpy as np
 from jal_am import JAL_AM 
 
-# call JAL-AM model and call file to train
+'''
+Trading Bot using Joint Action Learning with Deep Agent Modeling
+
+1. predicts how much market will move
+2. predicts how much it can bet
+3. bot bets based on budget
+'''
 class TradingBot:
     def __init__(self, observation_dim, action_dim, budget):
         self.agent = JAL_AM(observation_dim, action_dim) 
