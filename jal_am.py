@@ -4,16 +4,19 @@ import torch.nn.functional as F
 import numpy as np
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_dim=256):
+    def __init__(self, input_dim, output_dim):
         super().__init__()
         self.network = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim, dtype=float),
+            nn.Linear(input_dim, 256, dtype=float),
             nn.Dropout(0.5),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim, dtype=float),
+            nn.Linear(256, 256, dtype=float),
             nn.Dropout(0.5),
             nn.ReLU(),
-            nn.Linear(hidden_dim, output_dim, dtype=float),
+            nn.Linear(256, 32, dtype=float),
+            nn.Dropout(0.5),
+            nn.ReLU(),
+            nn.Linear(32, output_dim, dtype=float),
             nn.Dropout(0.5),
             nn.ReLU()
         )
