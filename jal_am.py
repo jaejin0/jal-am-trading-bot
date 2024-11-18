@@ -49,7 +49,7 @@ class JAL_AM:
         self.observation_dim = observation_dim
         self.action_dim = action_dim
         
-        self.network = NeuralNetwork(observation_dim, action_dim)
+        self.network = NeuralNetwork(observation_dim + action_dim, action_dim)
         self.other_agent_network = NeuralNetwork(observation_dim, action_dim)
 
         # train agent model using the obseration history
@@ -58,9 +58,16 @@ class JAL_AM:
         self.loss_fn = nn.CrossEntropyLoss()
 
     def policy(self, observation):
+        # numpy to torch
         observation = torch.from_numpy(observation) 
+        
+        # predict other agent's action
         other_agent_prob = self.other_agent_network.forward(observation)
-        action_prob = self.network.forward(observation)
+        
+        # choose action based on observation and predicted other agent's action
+        action_prob = self.network.forward(torch.cat(observation, other_agent_prob))
+        
+        # torch to numpy
         action_prob = action_prob.detach().numpy()
         return action_prob
         
