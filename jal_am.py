@@ -21,8 +21,7 @@ class NeuralNetwork(nn.Module):
     def forward(self, x):
         x = self.network(x)
         output = F.softmax(x, dim=0)
-        print("output", output)
-        return x
+        return output
 
 '''
 agents learn models of other agents j conditioned on states s: estimated pi_{-i}(a_{-i} | s)
@@ -48,17 +47,20 @@ class JAL_AM:
         self.observation_dim = observation_dim
         self.action_dim = action_dim
         
-        self.policy = NeuralNetwork(observation_dim, action_dim)
-        self.agent_model = NeuralNetwork(observation_dim, action_dim)
+        self.network = NeuralNetwork(observation_dim, action_dim)
+        self.other_agent_network = NeuralNetwork(observation_dim, action_dim)
 
         # train agent model using the obseration history
         # self.observation_history = np.zeros()
 
         self.loss_fn = nn.CrossEntropyLoss()
-        
 
     def policy(self, observation):
-        self.policy.forward(observation)
+        observation = torch.from_numpy(observation) 
+        other_agent_prob = self.other_agent_network.forward(observation)
+        print(observation)
+        print(other_agent_prob)
+        self.network.forward(observation)
         
         
     def learn(self, observation, joint_action):
