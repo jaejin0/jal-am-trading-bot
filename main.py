@@ -15,7 +15,7 @@ def main(training_file, test_file, observation_dim, action_dim, train_budget, te
 
     # call JAL-AM model, train, and test it
     agent = TradingBot(observation_dim, action_dim, train_budget) 
-    agent.train(train_data[0])
+    agent.test(train_data[0])
     
 if __name__ == '__main__':
     

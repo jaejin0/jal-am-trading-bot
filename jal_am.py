@@ -20,7 +20,9 @@ class NeuralNetwork(nn.Module):
 
     def forward(self, x):
         x = self.network(x)
+        print(x)
         output = F.softmax(x, dim=0)
+        print(output)
         return output
 
 '''
@@ -58,10 +60,9 @@ class JAL_AM:
     def policy(self, observation):
         observation = torch.from_numpy(observation) 
         other_agent_prob = self.other_agent_network.forward(observation)
-        print(observation)
-        print(other_agent_prob)
-        self.network.forward(observation)
-        
+        action_prob = self.network.forward(observation)
+        action_prob = action_prob.detach().numpy()
+        return action_prob
         
     def learn(self, observation, joint_action):
         pass
