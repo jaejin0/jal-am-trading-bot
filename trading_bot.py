@@ -32,36 +32,31 @@ class TradingBot:
         reward = self.perform_action(action)
 
     # modify after test
-    def train(self, observation):
-        # for timestep in range(len(observation)):
-            # current_observation = observation[timestep]
-            # action_prob = self.agent.policy(observation)
-            # action = self.act(action_prob)
-        pass  
+    def train(self, market_data):
+        for t in range(len(market_data)):
+            market_observation = market_data[t] # observation at t
+            self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
+            trader_status = np.array([self.budget, self.coin_num]) # observation of itself at t
+            action_prob = self.model.policy(market_observation, trader_status) # model's policy outputs a probability distribution of actions
+            action = self.choose_action(action_prob) # choose possible action
+
+
+        
+
         # run over observations and check how much it can earn
 
-    # modify after test
-    def eval(self, observation):
-        # for timestep in range(len(observation)):
-            observation = torch.from_numpy(observation)
-            action = self.agent.policy(observation)
-
-        # show how much it earns for every timestep % 100 
+    def eval(self, market_data):
+        result = "not modified yet"
+        return result
 
     def choose_action(self, action_prob):
         action = np.random.choice(len(action_prob), p=action_prob)
         match action:
             case 0: # Buy a coin
-                if self.current_coin_price < self.budget:
-                    self.coin_num += 1
-                    self.budget -= self.current_coin_price
-           
+                chosen_action = 0 if self.current_coin_price < self.budget else 2
             case 1: # Sell a coin
-                if self.coin_num > 0:
-                    self.coin_num -= 1
-                    self.budget += self.current_coin_price
-            
+                chosen_action = 1 if self.coin_num > 0 else 2 
             case _: # No-op
-                pass
-
-        return action 
+                chosen_action = 2
+        print(action, chosen_action)
+        return chosen_action 

@@ -27,8 +27,8 @@ def main(training_file, test_file, observation_dim, action_dim, status_dim, budg
     result = agent.train(train_data)
     display(result)
 
-    # test
-    result = agent.test(test_data)
+    # evaluate
+    result = agent.eval(test_data)
     display(result)
 
 def display_result(result):
