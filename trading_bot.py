@@ -90,13 +90,13 @@ class TradingBot:
         action = np.random.choice(len(action_prob), p=action_prob) # randomly choose an action based on probability distribution
         match action: # verify if the action is possible to perform. If not, replace with No-op
             case 0: # Buy a coin
-                chosen_action = 0 if self.current_coin_price < self.budget else 2
+                possible_action = 0 if self.current_coin_price < self.budget else 2
             case 1: # Sell a coin
-                chosen_action = 1 if self.coin_num > 0 else 2 
+                possible_action = 1 if self.coin_num > 0 else 2 
             case _: # No-op
-                chosen_action = 2
+                possible_action = 2
 
-        return action
+        return possible_action
     
     def reward_function(self, action):
         match action:

@@ -34,8 +34,8 @@ def main(training_file, test_file, market_observation_dim, action_dim, trader_st
     # display_result(result)
 
 def display_result(result):
-    pass
-    # print(result)
+    for r in result:
+        print(r)
     # print final budget, number of coin holding, and total networth
     # networth = final budget + number of coin * last price
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     action_dim = 3 # Buy, Sell, No-op
     trader_state_dim = 2 # budget, coin_num
     budget = 1000
-    threshold = 2
-    transaction_fee = 0.5
+    threshold = 10
+    transaction_fee = 1
 
     main(training_file, test_file, market_observation_dim, action_dim, trader_state_dim, budget, threshold, transaction_fee)
