@@ -83,6 +83,14 @@ class JAL_AM:
         return trader_action_prob
         
     def train_trader_network(self, observation, action, reward):
+        '''
+        should I make the policy network to compute multiple times over action space multiplied by the possiblity of the action by
+        other agent? like how it is written on page 20 of CH9 pt 2
+        like we set the input to be (1, 0, 0), (0, 1, 0), (0, 0, 1) and iterate over and get the highest Q value?
+
+        or should I just straight up input the probabilities? (0.2, 0.5, 0.3)? Which is how I thought the architecture will look like
+
+        '''
         pass
 
     def train_market_network(self):
