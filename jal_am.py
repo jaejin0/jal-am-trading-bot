@@ -64,15 +64,13 @@ class JAL_AM:
         
         # predict other agent's action
         other_agent_prob = self.other_agent_network.forward(observation)
-        print(observation)
-        print(other_agent_prob)
+        
         # choose action based on observation and predicted other agent's action
         observation = torch.cat([observation, other_agent_prob], dim=0)
         action_prob = self.network.forward(observation)
         
         # torch to numpy
         action_prob = action_prob.detach().numpy()
-        print(action_prob)
         return action_prob
         
     def learn(self, observation, joint_action):
