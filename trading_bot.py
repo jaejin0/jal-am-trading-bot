@@ -8,17 +8,24 @@ Trading Bot using Joint Action Learning with Deep Agent Modeling
 1. predicts how much market will move
 2. predicts how much it can bet
 3. bot bets based on budget
+
+Action Space: [
+    0: Buy a coin
+    1: Sell a coin
+    2: No-op
+]
+
 '''
 class TradingBot:
-    def __init__(self, observation_dim, action_dim, budget):
-        self.agent = JAL_AM(observation_dim, action_dim) 
+    def __init__(self, observation_dim, action_dim, status_dim, budget):
+        self.model = JAL_AM(observation_dim, action_dim, status_dim) 
         self.budget = budget
-        self.hasCoin = False
+        self.coin_num = 0
         
-    def test(self, observation):
-        current_observation = observation
-        action_prob = self.agent.policy(observation)
-        action = self.act(action_prob)
+    def action(self, observation):
+        trader_status = np.array([self.budget, self.coin_num])
+        action_prob = self.model.policy(observation, trader_status)
+        action = self.choose_action(action_prob) 
 
     # modify after test
     def train(self, observation):
@@ -38,5 +45,7 @@ class TradingBot:
         # show how much it earns for every timestep % 100 
 
     def choose_action(self, action_prob):
-        random_action = np.random.choice(len(action_prob), p=action_prob)
-        print(random_action) 
+        action = np.random.choice(len(action_prob), p=action_prob)
+        print(action) 
+
+        return action 

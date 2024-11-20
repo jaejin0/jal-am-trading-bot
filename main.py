@@ -2,7 +2,7 @@ import numpy as np
 import csv
 from trading_bot import TradingBot
 
-def main(training_file, test_file, observation_dim, action_dim, train_budget, test_budget):
+def main(training_file, test_file, observation_dim, action_dim, status_dim, train_budget, test_budget):
     # read csv file
     with open(training_file, 'r') as f:
         reader = csv.reader(f)
@@ -14,8 +14,9 @@ def main(training_file, test_file, observation_dim, action_dim, train_budget, te
     train_data = train_data.astype(float) 
 
     # call JAL-AM model, train, and evaluate it
-    agent = TradingBot(observation_dim, action_dim, train_budget) 
-    agent.test(train_data)
+    agent = TradingBot(observation_dim, action_dim, status_dim, train_budget) 
+    for t in range(len(train_data)):
+        agent.action(train_data[t])
    
     
     # print results
@@ -45,7 +46,8 @@ if __name__ == '__main__':
     test_file = dataset_dir + dataset[0]
     observation_dim = 6 # open, high, low, close, Volume BTC, Volume USD
     action_dim = 3 # Buy, Sell, No-op
+    status_dim = 2 # budget, coin_num
     train_budget = 1000
     test_budget = 1000
 
-    main(training_file, test_file, observation_dim, action_dim, train_budget, test_budget)
+    main(training_file, test_file, observation_dim, action_dim, status_dim, train_budget, test_budget)
