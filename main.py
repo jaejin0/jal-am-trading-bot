@@ -7,29 +7,31 @@ def main(training_file, test_file, observation_dim, action_dim, status_dim, budg
     with open(training_file, 'r') as f:
         reader = csv.reader(f)
         train_data = list(reader)
+        train_data.reverse()
         train_data = np.array(train_data)
     
     with open(test_file, 'r') as f:
         reader = csv.reader(f)
         test_data = list(reader)
+        test_data.reverse()
         test_data = np.array(test_data)
-
+    
     # process numpy matrix
-    train_data = train_data[1:, 3:]
+    train_data = train_data[:-1, 3:]
     train_data = train_data.astype(float) 
-    test_data = test_data[1:, 3:]
+    test_data = test_data[:-1, 3:]
     test_data = test_data.astype(float)
-
+    
     # create JAL-AM model
     agent = TradingBot(observation_dim, action_dim, status_dim, budget, threshold) 
     
     # train
     result = agent.train(train_data)
-    display(result)
+    self.display_result(result)
 
     # evaluate
     result = agent.eval(test_data)
-    display(result)
+    self.display_result(result)
 
 def display_result(result):
     print(result)

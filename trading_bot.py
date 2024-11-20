@@ -24,32 +24,29 @@ class TradingBot:
         self.threshold = threshold
         self.current_coin_price = None
 
-    def action(self, observation):
-        self.current_coin_price = (observation[0] + observation[3]) / 2 # average of opening price and closing price
-        trader_status = np.array([self.budget, self.coin_num])
-        action_prob = self.model.policy(observation, trader_status)
+    def observation(self, market_observation):
+        self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
+        trader_status = np.array([self.budget, self.coin_num]) # observation of itself at t
+        return market_observation, trader_status 
+
+    def action(self, market_observation, trader_status):
+        action_prob = self.model.policy(market_observation, trader_status)
         action = self.choose_action(action_prob)
-        reward = self.perform_action(action)
+        return action
 
-    # modify after test
     def train(self, market_data):
-        for t in range(len(market_data)):
-            market_observation = market_data[t] # observation at t
-            self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
-            trader_status = np.array([self.budget, self.coin_num]) # observation of itself at t
-            action_prob = self.model.policy(market_observation, trader_status) # model's policy outputs a probability distribution of actions
-            action = self.choose_action(action_prob) # choose possible action
-
-
-        
-
-        # run over observations and check how much it can earn
-
+        for t in range(len(market_data)): 
+            market_observation, trader_status = self.observation(market_data[t])
+            action = self.action(market_observation, trader_status)
+            # reward = self.reward()
+            # self.model.learn()
+            break
     def eval(self, market_data):
         result = "not modified yet"
         return result
 
     def choose_action(self, action_prob):
+        print(action_prob)
         action = np.random.choice(len(action_prob), p=action_prob)
         match action:
             case 0: # Buy a coin
@@ -58,5 +55,6 @@ class TradingBot:
                 chosen_action = 1 if self.coin_num > 0 else 2 
             case _: # No-op
                 chosen_action = 2
+        print(self.current_coin_price, self.budget)
         print(action, chosen_action)
         return chosen_action 
