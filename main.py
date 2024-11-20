@@ -23,7 +23,7 @@ def main(training_file, test_file, observation_dim, action_dim, status_dim, budg
     test_data = test_data.astype(float)
     
     # create JAL-AM model
-    agent = TradingBot(observation_dim, action_dim, status_dim, budget, threshold) 
+    agent = TradingBot(observation_dim, action_dim, status_dim, budget, threshold, transaction_fee) 
     
     # train
     result = agent.train(train_data)
@@ -35,6 +35,8 @@ def main(training_file, test_file, observation_dim, action_dim, status_dim, budg
 
 def display_result(result):
     print(result)
+    # print final budget, number of coin holding, and total networth
+    # networth = final budget + number of coin * last price
 
 if __name__ == '__main__':
     

@@ -27,6 +27,13 @@ class NeuralNetwork(nn.Module):
         return output
 
 '''
+Joint Action Learning with Agent Modeling does the following:
+    1. based on observation, model predicts other agent's action using neural network
+    2. choose optimal action based on the observation and the predicted other agent's action
+    3. train agent modeling network with supervised learning
+    4. train policy network with reward
+
+details:
 agents learn models of other agents j conditioned on states s: estimated pi_{-i}(a_{-i} | s)
 agents learn value functions conditioned on the joint action: Q_i(s, a)
 using the value function and agent models, agent i can compute its expected action values under the current models of other agents: AV_i(s, a_i) = SUM_{a_{-i} in A_{-i}}Q_i(s, <a_i, a_{-i}>) PI_{j in I\{i}} estimated pi_j (a_j | s)
