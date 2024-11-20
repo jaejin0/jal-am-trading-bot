@@ -34,7 +34,8 @@ def main(training_file, test_file, observation_dim, action_dim, status_dim, budg
     display_result(result)
 
 def display_result(result):
-    print(result)
+    pass
+    # print(result)
     # print final budget, number of coin holding, and total networth
     # networth = final budget + number of coin * last price
 

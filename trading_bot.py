@@ -15,14 +15,14 @@ Action Space: [
 
 '''
 class TradingBot:
-    def __init__(self, observation_dim, action_dim, status_dim, budget, threshold, transaction_fee):
+    def __init__(self, market_observation_dim, action_dim, trader_state_dim, budget, threshold, transaction_fee):
         # model configuration
-        self.model = JAL_AM(observation_dim, action_dim, status_dim) 
+        self.model = JAL_AM(market_observation_dim, action_dim, trader_state_dim) 
         self.initial_budget = budget
         self.threshold = threshold
         self.transaction_fee = transaction_fee
 
-        # status
+        # trader state
         self.budget = budget
         self.coin_num = 0
         
@@ -33,12 +33,14 @@ class TradingBot:
 
     def trade(self, market_data, train=False):
         self.market_data = market_data 
-         
-        market_observation, trader_status = self.reset()
+        
+        history = []
+
+        market_observation, trader_state = self.reset()
         for t in range(len(market_data)): 
-            action = self.action(market_observation, trader_status)
+            action = self.action(market_observation, trader_state)
             
-            market_observation, trader_status, reward, done = self.step(action) 
+            market_observation, trader_state, reward, done = self.step(action) 
             
             if train:
                 pass
@@ -48,7 +50,13 @@ class TradingBot:
             if done:
                 pass
 
+            
+            if t % 100 == 0:
+                history.append([self.budget, self.coin_num])
+
             break
+
+        return history
 
     def reset(self):
         # reset to initial setting
@@ -57,26 +65,29 @@ class TradingBot:
         self.current_coin_price = None
         self.timestep = 0
         
-        market_observation, trader_status = self.observation()
-        return market_observation, trader_status
+        market_observation, trader_state = self.observation()
+        return market_observation, trader_state
 
     def step(self, action):
+        # current state
         reward = self.reward_function(action) 
+
+        # state transition
         self.transition_function(action)
-        
+       
+        # next state
         done = True if self.timestep == len(self.market_data) - 1 else False
-        market_observation, trader_status = self.observation()
+        market_observation, trader_state = self.observation()
         
-        return market_observation, trader_status, reward, done
+        return market_observation, trader_state, reward, done
 
     def observation(self):
         market_observation = self.market_data[self.timestep] # current market data
-        self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
-        trader_status = np.array([self.budget, self.coin_num]) # observation of itself at t
-        return market_observation, trader_status # seperated observation because market model doesn't observe trader_status 
+        trader_state = np.array([self.budget, self.coin_num]) # observation of itself at t
+        return market_observation, trader_state # seperated observation because market model doesn't observe trader_state 
 
-    def action(self, market_observation, trader_status):
-        action_prob = self.model.policy(market_observation, trader_status) # call JAL AM model 
+    def action(self, market_observation, trader_state):
+        action_prob = self.model.policy(market_observation, trader_state) # call JAL AM model 
         action = np.random.choice(len(action_prob), p=action_prob) # randomly choose an action based on probability distribution
         match action: # verify if the action is possible to perform. If not, replace with No-op
             case 0: # Buy a coin
@@ -98,10 +109,18 @@ class TradingBot:
                 return 0
     
     def transition_function(self, action): 
-        self.timestep += 1
+        # change trader state
         match action:
             case 0: # Buy a coin
-                a = 10
-                a -= 3 + 4
-                print(a)
-                # self.budget -= self.current_coin_price +  
+                self.budget -= self.current_coin_price + self.transaction_fee
+                self.coin_num += 1
+            case 1: # Sell a coin
+                self.budget += self.current_coin_price - self.transaction_fee
+                self.coin_num -= 1
+            case _: # No-op
+                pass
+        self.timestep += 1
+        market_observation = self.market_data[self.timestep] # current market data
+        self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
+
+
