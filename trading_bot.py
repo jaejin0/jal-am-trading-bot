@@ -45,6 +45,8 @@ class TradingBot:
             
             if train:
                 pass
+                self.model.train_trader_network()
+                self.model.train_market_network()
                 # using reward, train trader_network
                 # using observation, perform supervised learning on market_network
 
@@ -108,7 +110,6 @@ class TradingBot:
                 return 0
     
     def transition_function(self, action): 
-        # change trader state
         match action:
             case 0: # Buy a coin
                 self.budget -= self.current_coin_price + self.transaction_fee

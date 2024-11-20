@@ -82,11 +82,9 @@ class JAL_AM:
         trader_action_prob = trader_action_prob.detach().numpy()
         return trader_action_prob
         
-    def learn(self, observation, joint_action):
+    def train_trader_network(self, observation, action, reward):
         pass
 
-    def train_agent_model(self):
+    def train_market_network(self):
         pass
 
-    def train_policy(self): 
-        pass
