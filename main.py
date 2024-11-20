@@ -23,15 +23,15 @@ def main(training_file, test_file, observation_dim, action_dim, status_dim, budg
     test_data = test_data.astype(float)
     
     # create JAL-AM model
-    agent = TradingBot(observation_dim, action_dim, status_dim, budget, threshold, transaction_fee) 
+    trader = TradingBot(observation_dim, action_dim, status_dim, budget, threshold, transaction_fee) 
     
     # train
-    result = agent.train(train_data)
-    self.display_result(result)
+    result = trader.trade(train_data, train=True)
+    display_result(result)
 
     # evaluate
-    result = agent.eval(test_data)
-    self.display_result(result)
+    result = trader.trade(test_data, train=False)
+    display_result(result)
 
 def display_result(result):
     print(result)

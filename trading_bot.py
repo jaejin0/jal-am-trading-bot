@@ -3,11 +3,9 @@ import numpy as np
 from jal_am import JAL_AM 
 
 '''
-Trading Bot using Joint Action Learning with Deep Agent Modeling
-
-1. predicts how much market will move
-2. predicts how much it can bet
-3. bot bets based on budget
+Trading Bot will take the market data and configuration as inputs.
+Based on inputs, the Trading Bot will form a Markov Decision Process.
+JAL-AM model will act as a agent.
 
 Action Space: [
     0: Buy a coin
@@ -33,19 +31,24 @@ class TradingBot:
         self.market_data = None 
         self.timestep = 0
 
-    def train(self, market_data):
+    def trade(self, market_data, train=False):
         self.market_data = market_data 
          
         market_observation, trader_status = self.reset()
         for t in range(len(market_data)): 
             action = self.action(market_observation, trader_status)
             
+            market_observation, trader_status, reward, done = self.step(action) 
+            
+            if train:
+                pass
+                # using reward, train trader_network
+                # using observation, perform supervised learning on market_network
+
+            if done:
+                pass
 
             break
-
-    def eval(self, market_data):
-        result = "not modified yet"
-        return result
 
     def reset(self):
         # reset to initial setting
@@ -58,14 +61,12 @@ class TradingBot:
         return market_observation, trader_status
 
     def step(self, action):
-        self.timestep += 1
+        reward = self.reward_function(action) 
+        self.transition_function(action)
+        
         done = True if self.timestep == len(self.market_data) - 1 else False
-
-        self.action(action)
-
         market_observation, trader_status = self.observation()
         
-
         return market_observation, trader_status, reward, done
 
     def observation(self):
@@ -95,19 +96,12 @@ class TradingBot:
                 return self.current_coin_price - self.transaction_fee
             case _: # No-op
                 return 0
-
-    def train(self, market_data):
-        self.market_data = market_data
-        for t in range(len(market_data)): 
-            market_observation, trader_status = self.observation(market_data[t])
-            action = self.action(market_observation, trader_status)
-            reward = self.reward_function(action)
-            print(self.current_coin_price, self.transaction_fee)
-            print(action)
-            print(reward)
-            # self.model.learn()
-            break
-
-    def eval(self, market_data):
-        result = "not modified yet"
-        return result
+    
+    def transition_function(self, action): 
+        self.timestep += 1
+        match action:
+            case 0: # Buy a coin
+                a = 10
+                a -= 3 + 4
+                print(a)
+                # self.budget -= self.current_coin_price +  
