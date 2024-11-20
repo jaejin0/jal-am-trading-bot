@@ -53,12 +53,12 @@ by Claude Shannon
 # Joint-Action Learning with Deep Agent Modeling
 # assume this acts in two-player game
 class JAL_AM:
-    def __init__(self, market_observation_dim, action_dim, trader_status_dim):
+    def __init__(self, market_observation_dim, action_dim, trader_state_dim):
         self.market_observation_dim = market_observation_dim
         self.action_dim = action_dim
-        self.trader_status_dim = trader_status_dim
+        self.trader_state_dim = trader_state_dim
 
-        self.trader_network = NeuralNetwork(market_observation_dim + action_dim + trader_status_dim, action_dim)
+        self.trader_network = NeuralNetwork(market_observation_dim + action_dim + trader_state_dim, action_dim)
         self.market_network = NeuralNetwork(market_observation_dim, action_dim)
 
         # train agent model using the obseration history
@@ -66,16 +66,16 @@ class JAL_AM:
 
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def policy(self, market_observation, trader_status):
+    def policy(self, market_observation, trader_state):
         # numpy to torch
         market_observation = torch.from_numpy(market_observation) 
-        trader_status = torch.from_numpy(trader_status)
+        trader_state = torch.from_numpy(trader_state)
 
         # predict other agent's action
         market_action_prob = self.market_network.forward(market_observation)
         
         # choose action based on observation and predicted other agent's action
-        observation = torch.cat([market_observation, market_action_prob, trader_status], dim=0)
+        observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
         trader_action_prob = self.trader_network.forward(observation)
         
         # torch to numpy
