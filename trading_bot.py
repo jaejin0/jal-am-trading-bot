@@ -14,6 +14,8 @@ class TradingBot:
         self.agent = JAL_AM(observation_dim, action_dim) 
         self.budget = budget
         self.hasCoin = False
+        
+
 
     def test(self, observation):
         current_observation = observation
