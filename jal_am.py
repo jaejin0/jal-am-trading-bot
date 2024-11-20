@@ -23,9 +23,7 @@ class NeuralNetwork(nn.Module):
 
     def forward(self, x):
         x = self.network(x)
-        print(x)
         output = F.softmax(x, dim=0)
-        print(output)
         return output
 
 '''
