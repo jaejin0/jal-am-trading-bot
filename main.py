@@ -30,8 +30,8 @@ def main(training_file, test_file, market_observation_dim, action_dim, trader_st
     display_result(result)
 
     # evaluate
-    result = trader.trade(test_data, train=False)
-    display_result(result)
+    # result = trader.trade(test_data, train=False)
+    # display_result(result)
 
 def display_result(result):
     pass

@@ -37,10 +37,11 @@ class TradingBot:
         history = []
 
         market_observation, trader_state = self.reset()
-        for t in range(len(market_data)): 
+        for t in range(len(market_data) - 1): 
             action = self.action(market_observation, trader_state)
-            
+
             market_observation, trader_state, reward, done = self.step(action) 
+            print(market_observation, trader_state, reward, done) 
             
             if train:
                 pass
@@ -50,11 +51,8 @@ class TradingBot:
             if done:
                 pass
 
-            
             if t % 100 == 0:
                 history.append([self.budget, self.coin_num])
-
-            break
 
         return history
 
@@ -83,6 +81,7 @@ class TradingBot:
 
     def observation(self):
         market_observation = self.market_data[self.timestep] # current market data
+        self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
         trader_state = np.array([self.budget, self.coin_num]) # observation of itself at t
         return market_observation, trader_state # seperated observation because market model doesn't observe trader_state 
 
@@ -120,7 +119,3 @@ class TradingBot:
             case _: # No-op
                 pass
         self.timestep += 1
-        market_observation = self.market_data[self.timestep] # current market data
-        self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
-
-
