@@ -25,10 +25,11 @@ class TradingBot:
         self.current_coin_price = None
 
     def action(self, observation):
-        current_coin_price = (observation[0] + observation[3]) / 2 # average of opening price and closing price
+        self.current_coin_price = (observation[0] + observation[3]) / 2 # average of opening price and closing price
         trader_status = np.array([self.budget, self.coin_num])
         action_prob = self.model.policy(observation, trader_status)
         action = self.choose_action(action_prob)
+        reward = self.perform_action(action)
 
     # modify after test
     def train(self, observation):
@@ -51,9 +52,15 @@ class TradingBot:
         action = np.random.choice(len(action_prob), p=action_prob)
         match action:
             case 0: # Buy a coin
-                pass
+                if self.current_coin_price < self.budget:
+                    self.coin_num += 1
+                    self.budget -= self.current_coin_price
+           
             case 1: # Sell a coin
-                pass
+                if self.coin_num > 0:
+                    self.coin_num -= 1
+                    self.budget += self.current_coin_price
+            
             case _: # No-op
                 pass
 
