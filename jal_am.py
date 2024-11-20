@@ -46,32 +46,34 @@ by Claude Shannon
 # Joint-Action Learning with Deep Agent Modeling
 # assume this acts in two-player game
 class JAL_AM:
-    def __init__(self, observation_dim, action_dim):
-        self.observation_dim = observation_dim
+    def __init__(self, market_observation_dim, action_dim, trader_status_dim):
+        self.market_observation_dim = market_observation_dim
         self.action_dim = action_dim
-        
-        self.network = NeuralNetwork(observation_dim + action_dim, action_dim)
-        self.other_agent_network = NeuralNetwork(observation_dim, action_dim)
+        self.trader_status_dim = trader_status_dim
+
+        self.trader_network = NeuralNetwork(market_observation_dim + action_dim + trader_status_dim, action_dim)
+        self.market_network = NeuralNetwork(market_observation_dim, action_dim)
 
         # train agent model using the obseration history
         # self.observation_history = np.zeros()
 
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def policy(self, observation):
+    def policy(self, market_observation, trader_status):
         # numpy to torch
-        observation = torch.from_numpy(observation) 
-        
+        market_observation = torch.from_numpy(market_observation) 
+        trader_status = torch.from_numpy(trader_status)
+
         # predict other agent's action
-        other_agent_prob = self.other_agent_network.forward(observation)
+        market_action_prob = self.market_network.forward(market_observation)
         
         # choose action based on observation and predicted other agent's action
-        observation = torch.cat([observation, other_agent_prob], dim=0)
-        action_prob = self.network.forward(observation)
+        observation = torch.cat([market_observation, market_action_prob, trader_status], dim=0)
+        trader_action_prob = self.trader_network.forward(observation)
         
         # torch to numpy
-        action_prob = action_prob.detach().numpy()
-        return action_prob
+        trader_action_prob = trader_action_prob.detach().numpy()
+        return trader_action_prob
         
     def learn(self, observation, joint_action):
         pass
@@ -79,5 +81,5 @@ class JAL_AM:
     def train_agent_model(self):
         pass
 
-    def train_policy(self):
+    def train_policy(self): 
         pass

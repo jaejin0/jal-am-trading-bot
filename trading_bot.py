@@ -15,13 +15,12 @@ class TradingBot:
         self.budget = budget
         self.hasCoin = False
         
-
-
     def test(self, observation):
         current_observation = observation
         action_prob = self.agent.policy(observation)
         action = self.act(action_prob)
 
+    # modify after test
     def train(self, observation):
         # for timestep in range(len(observation)):
             # current_observation = observation[timestep]
@@ -30,7 +29,7 @@ class TradingBot:
         pass  
         # run over observations and check how much it can earn
 
-    # not modified
+    # modify after test
     def eval(self, observation):
         # for timestep in range(len(observation)):
             observation = torch.from_numpy(observation)
@@ -38,6 +37,6 @@ class TradingBot:
 
         # show how much it earns for every timestep % 100 
 
-    def act(self, action_prob):
+    def choose_action(self, action_prob):
         random_action = np.random.choice(len(action_prob), p=action_prob)
         print(random_action) 

@@ -13,10 +13,14 @@ def main(training_file, test_file, observation_dim, action_dim, train_budget, te
     train_data = train_data[1:, 3:]
     train_data = train_data.astype(float) 
 
-    # call JAL-AM model, train, and test it
+    # call JAL-AM model, train, and evaluate it
     agent = TradingBot(observation_dim, action_dim, train_budget) 
-    agent.test(train_data[0])
+    agent.test(train_data)
+   
     
+    # print results
+    pass
+
 if __name__ == '__main__':
     
     # dataset
