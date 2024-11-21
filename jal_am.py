@@ -68,8 +68,8 @@ class JAL_AM:
 
     def policy(self, market_observation, trader_state):
         # numpy to torch
-        market_observation = torch.from_numpy(market_observation) 
-        trader_state = torch.from_numpy(trader_state)
+        market_observation = torch.from_numpy(market_observation).flatten() 
+        trader_state = torch.from_numpy(trader_state).flatten()
 
         # predict other agent's action
         market_action_prob = self.market_network.forward(market_observation)

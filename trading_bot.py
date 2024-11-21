@@ -42,7 +42,6 @@ class TradingBot:
             action = self.action(market_observation, trader_state)
 
             market_observation, trader_state, reward, done = self.step(action) 
-            print(market_observation, trader_state, reward, done) 
             
             if train:
                 pass
@@ -85,10 +84,9 @@ class TradingBot:
     def observation(self):
         # observe data of the market for the last "market_observation_time_range" 
         if self.timestep < self.market_observation_time_range - 1:
-            print("FOUND ERROR")
+            print("ERROR FOUND")
         market_observation = self.market_data[self.timestep - self.market_observation_time_range + 1 : self.timestep + 1]
-        print(market_observation)
-        self.current_coin_price = (market_observation[0][0] + market_observation[0][3]) / 2 # average of opening price and closing price
+        self.current_coin_price = (market_observation[-1][0] + market_observation[-1][3]) / 2 # average of opening price and closing price
         trader_state = np.array([self.budget, self.coin_num]) # observation of itself at t
         return market_observation, trader_state # seperated observation because market model doesn't observe trader_state 
 
