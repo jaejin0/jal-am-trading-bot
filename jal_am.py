@@ -74,6 +74,9 @@ class JAL_AM:
         # predict other agent's action
         market_action_prob = self.market_network.forward(market_observation)
         
+        ### TODO ###
+        # implement iterating over action space and multiply the Q value with the probability
+
         # choose action based on observation and predicted other agent's action
         observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
         trader_action_prob = self.trader_network.forward(observation)
