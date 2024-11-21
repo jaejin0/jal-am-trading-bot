@@ -58,7 +58,7 @@ class JAL_AM:
         self.action_dim = action_dim
         self.trader_state_dim = trader_state_dim
 
-        self.trader_network = NeuralNetwork(market_observation_dim + action_dim + trader_state_dim, action_dim)
+        self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim)
         self.market_network = NeuralNetwork(market_observation_dim, action_dim)
 
         # train agent model using the obseration history
@@ -83,6 +83,7 @@ class JAL_AM:
         return trader_action_prob
         
     def train_trader_network(self, observation, action, reward):
+
         '''
         should I make the policy network to compute multiple times over action space multiplied by the possiblity of the action by
         other agent? like how it is written on page 20 of CH9 pt 2

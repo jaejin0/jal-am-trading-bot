@@ -15,9 +15,10 @@ Action Space: [
 
 '''
 class TradingBot:
-    def __init__(self, market_observation_dim, action_dim, trader_state_dim, budget, threshold, transaction_fee):
+    def __init__(self, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee):
         # model configuration
-        self.model = JAL_AM(market_observation_dim, action_dim, trader_state_dim) 
+        self.model = JAL_AM(market_observation_feature_dim * market_observation_time_range, action_dim, trader_state_dim) 
+        self.market_observation_time_range = market_observation_time_range
         self.initial_budget = budget
         self.threshold = threshold
         self.transaction_fee = transaction_fee
@@ -29,7 +30,7 @@ class TradingBot:
         # current data
         self.current_coin_price = None
         self.market_data = None 
-        self.timestep = 0
+        self.timestep = self.market_observation_time_range - 1
 
     def trade(self, market_data, train=False):
         self.market_data = market_data 
@@ -63,8 +64,8 @@ class TradingBot:
         self.budget = self.initial_budget
         self.coin_num = 0
         self.current_coin_price = None
-        self.timestep = 0
-        
+        self.timestep = self.market_observation_time_range - 1
+
         market_observation, trader_state = self.observation()
         return market_observation, trader_state
 
@@ -82,7 +83,13 @@ class TradingBot:
         return market_observation, trader_state, reward, done
 
     def observation(self):
-        market_observation = self.market_data[self.timestep] # current market data
+        # observe data of the market for the last "market_observation_time_range" 
+        if self.timestep < self.market_observation_time_range - 1:
+            print("FOUND ERROR")
+        market_observation = []
+        for t in range(self.timestep, self.timestep - self.market_observation_time_range, -1):
+            market_observation.append(self.market_data[t])
+        print(market_observation)
         self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
         trader_state = np.array([self.budget, self.coin_num]) # observation of itself at t
         return market_observation, trader_state # seperated observation because market model doesn't observe trader_state 
