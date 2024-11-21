@@ -86,11 +86,9 @@ class TradingBot:
         # observe data of the market for the last "market_observation_time_range" 
         if self.timestep < self.market_observation_time_range - 1:
             print("FOUND ERROR")
-        market_observation = []
-        for t in range(self.timestep, self.timestep - self.market_observation_time_range, -1):
-            market_observation.append(self.market_data[t])
+        market_observation = self.market_data[self.timestep - self.market_observation_time_range + 1 : self.timestep + 1]
         print(market_observation)
-        self.current_coin_price = (market_observation[0] + market_observation[3]) / 2 # average of opening price and closing price
+        self.current_coin_price = (market_observation[0][0] + market_observation[0][3]) / 2 # average of opening price and closing price
         trader_state = np.array([self.budget, self.coin_num]) # observation of itself at t
         return market_observation, trader_state # seperated observation because market model doesn't observe trader_state 
 
