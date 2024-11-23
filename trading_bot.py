@@ -34,19 +34,18 @@ class TradingBot:
 
     def trade(self, market_data, train=False):
         self.market_data = market_data 
-        
         history = []
 
         market_observation, trader_state = self.reset()
-        for t in range(len(market_data) - 1): 
+        for t in range(len(market_data) - self.market_observation_time_range):
             action = self.action(market_observation, trader_state)
-
+            
             market_observation, trader_state, reward, done = self.step(action) 
             
             if train:
                 pass
-                self.model.train_trader_network()
-                self.model.train_market_network()
+                # self.model.train_trader_network()
+                # self.model.train_market_network()
                 # using reward, train trader_network
                 # using observation, perform supervised learning on market_network
 
@@ -74,11 +73,11 @@ class TradingBot:
 
         # state transition
         self.transition_function(action)
-       
+ 
         # next state
         done = True if self.timestep == len(self.market_data) - 1 else False
         market_observation, trader_state = self.observation()
-        
+ 
         return market_observation, trader_state, reward, done
 
     def observation(self):
@@ -102,7 +101,7 @@ class TradingBot:
                 possible_action = 2
 
         return possible_action
-    
+ 
     def reward_function(self, action):
         match action:
             case 0: # Buy a coin

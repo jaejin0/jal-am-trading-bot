@@ -83,7 +83,6 @@ class JAL_AM:
         #     observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
         # feed in the observation to the trader_network
 
-
         # choose action based on observation and predicted other agent's action
         observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
         trader_action_prob = self.trader_network.forward(observation)
