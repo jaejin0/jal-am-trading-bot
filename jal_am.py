@@ -63,8 +63,12 @@ class JAL_AM:
 
         # train agent model using the obseration history
         # self.observation_history = np.zeros()
-
-        self.loss_fn = nn.CrossEntropyLoss()
+        
+        self.trader_optimizer = optim.Adam(self.trader_network.parameters(), lr=learning_rate)
+        # self.trader_loss = nn.MSELoss()
+        
+        self.market_optimizer = optim.Adam(self.market_network.parameters(), lr=learning_rate) 
+        # self.market_loss = nn.CrossEntropyLoss()
 
     def policy(self, market_observation, trader_state):
         # numpy to torch
@@ -104,5 +108,4 @@ class JAL_AM:
         pass
 
     def train_market_network(self):
-        pass
-
+         
