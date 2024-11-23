@@ -58,8 +58,8 @@ class JAL_AM:
         self.action_dim = action_dim
         self.trader_state_dim = trader_state_dim
 
-        self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim)
-        self.market_network = NeuralNetwork(market_observation_dim, action_dim)
+        self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim) # DQN with reinforcement learning
+        self.market_network = NeuralNetwork(market_observation_dim, action_dim) # DQN with supervised learning
 
         # train agent model using the obseration history
         # self.observation_history = np.zeros()
@@ -71,11 +71,18 @@ class JAL_AM:
         market_observation = torch.from_numpy(market_observation).flatten() 
         trader_state = torch.from_numpy(trader_state).flatten()
 
-        # predict other agent's action
+        # predict other agent's action probability distribution
         market_action_prob = self.market_network.forward(market_observation)
-        
-        ### TODO ###
-        # implement iterating over action space and multiply the Q value with the probability
+
+        # Later, changing can be needed to iterate over possible actions of the other agent and multiply the value and probability
+        # For now, it is implemented simply as input to the trader network
+        # for i in range(self.action_dim):
+        #     market_action = np.zeros(self.action_dim)
+        #     market_action[i] = 1
+        #     market_action = torch.tensor(market_action)
+        #     observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
+        # feed in the observation to the trader_network
+
 
         # choose action based on observation and predicted other agent's action
         observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)

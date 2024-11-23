@@ -12,4 +12,4 @@ data = np.array(data)
 timestep = 4
 time_range = 2
 
-print(data[timestep - time_range + 1 : timestep + 1])
+print(data[timestep: : -1])
