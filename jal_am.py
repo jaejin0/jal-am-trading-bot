@@ -96,7 +96,7 @@ class JAL_AM:
         return trader_action_prob
         
     def train_trader_network(self, observation, action, reward):
-
+        # TODO: implement training process for trader and market networks
         '''
         should I make the policy network to compute multiple times over action space multiplied by the possiblity of the action by
         other agent? like how it is written on page 20 of CH9 pt 2
