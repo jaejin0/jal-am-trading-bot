@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import torch.optim as optim
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -53,7 +54,7 @@ by Claude Shannon
 # Joint-Action Learning with Deep Agent Modeling
 # assume this acts in two-player game
 class JAL_AM:
-    def __init__(self, market_observation_dim, action_dim, trader_state_dim):
+    def __init__(self, market_observation_dim, action_dim, trader_state_dim, learning_rate):
         self.market_observation_dim = market_observation_dim
         self.action_dim = action_dim
         self.trader_state_dim = trader_state_dim
@@ -61,20 +62,13 @@ class JAL_AM:
         self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim) # DQN with reinforcement learning
         self.market_network = NeuralNetwork(market_observation_dim, action_dim) # DQN with supervised learning
 
-        # train agent model using the obseration history
-        # self.observation_history = np.zeros()
-        
         self.trader_optimizer = optim.Adam(self.trader_network.parameters(), lr=learning_rate)
-        # self.trader_loss = nn.MSELoss()
+        self.trader_loss = nn.CrossEntropyLoss()
         
         self.market_optimizer = optim.Adam(self.market_network.parameters(), lr=learning_rate) 
-        # self.market_loss = nn.CrossEntropyLoss()
+        self.market_loss = nn.CrossEntropyLoss()
 
     def policy(self, market_observation, trader_state):
-        # numpy to torch
-        market_observation = torch.from_numpy(market_observation).flatten() 
-        trader_state = torch.from_numpy(trader_state).flatten()
-
         # predict other agent's action probability distribution
         market_action_prob = self.market_network.forward(market_observation)
 
@@ -91,21 +85,10 @@ class JAL_AM:
         observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
         trader_action_prob = self.trader_network.forward(observation)
         
-        # torch to numpy
-        trader_action_prob = trader_action_prob.detach().numpy()
         return trader_action_prob
         
-    def train_trader_network(self, observation, action, reward):
-        # TODO: implement training process for trader and market networks
-        '''
-        should I make the policy network to compute multiple times over action space multiplied by the possiblity of the action by
-        other agent? like how it is written on page 20 of CH9 pt 2
-        like we set the input to be (1, 0, 0), (0, 1, 0), (0, 0, 1) and iterate over and get the highest Q value?
-
-        or should I just straight up input the probabilities? (0.2, 0.5, 0.3)? Which is how I thought the architecture will look like
-
-        '''
+    def train_trader_network(self, observation, action, reward, next_observation):
         pass
 
     def train_market_network(self):
-         
+        pass 

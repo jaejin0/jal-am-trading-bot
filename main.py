@@ -2,7 +2,7 @@ import numpy as np
 import csv
 from trading_bot import TradingBot
 
-def main(training_file, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee):
+def main(training_file, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate):
     # read csv file
     with open(training_file, 'r') as f:
         reader = csv.reader(f)
@@ -23,7 +23,7 @@ def main(training_file, test_file, market_observation_feature_dim, market_observ
     test_data = test_data.astype(float)
     
     # create JAL-AM model
-    trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee) 
+    trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate) 
     
     # train
     result = trader.trade(train_data, train=True)
@@ -65,8 +65,11 @@ if __name__ == '__main__':
     market_observation_time_range = 10 # observe most recent 30 timesteps
     action_dim = 3 # Buy, Sell, No-op
     trader_state_dim = 2 # budget, coin_num
-    budget = 1000
+    budget = 10000
     threshold = 10
     transaction_fee = 1
 
-    main(training_file, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee)
+    buffer_size = 100000
+    learning_rate = 0.001
+
+    main(training_file, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate)
