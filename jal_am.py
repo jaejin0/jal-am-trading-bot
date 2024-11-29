@@ -54,41 +54,63 @@ by Claude Shannon
 # Joint-Action Learning with Deep Agent Modeling
 # assume this acts in two-player game
 class JAL_AM:
-    def __init__(self, market_observation_dim, action_dim, trader_state_dim, learning_rate):
+    def __init__(self, market_observation_dim, action_dim, trader_state_dim, learning_rate, target_update_rate, discount_factor):
         self.market_observation_dim = market_observation_dim
         self.action_dim = action_dim
         self.trader_state_dim = trader_state_dim
+        self.target_update_rate = target_update_rate
+        self.discount_factor = discount_factor
 
         self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim) # DQN with reinforcement learning
+        self.trader_target_network = NeuralNetowork(market_observation_dim + trader_state_dim + action_dim, action_dim)
+        self.trader_target_network.load_state_dict(self.trader_network.state_dict())
+
         self.market_network = NeuralNetwork(market_observation_dim, action_dim) # DQN with supervised learning
 
-        self.trader_optimizer = optim.Adam(self.trader_network.parameters(), lr=learning_rate)
+        self.trader_optimizer = optim.AdamW(self.trader_network.parameters(), lr=learning_rate)
         self.trader_loss = nn.CrossEntropyLoss()
         
-        self.market_optimizer = optim.Adam(self.market_network.parameters(), lr=learning_rate) 
+        self.market_optimizer = optim.AdamW(self.market_network.parameters(), lr=learning_rate) 
         self.market_loss = nn.CrossEntropyLoss()
 
     def policy(self, market_observation, trader_state):
         # predict other agent's action probability distribution
         market_action_prob = self.market_network.forward(market_observation)
 
-        # Later, changing can be needed to iterate over possible actions of the other agent and multiply the value and probability
-        # For now, it is implemented simply as input to the trader network
-        # for i in range(self.action_dim):
-        #     market_action = np.zeros(self.action_dim)
-        #     market_action[i] = 1
-        #     market_action = torch.tensor(market_action)
-        #     observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
-        # feed in the observation to the trader_network
-
         # choose action based on observation and predicted other agent's action
         observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
         trader_action_prob = self.trader_network.forward(observation)
         
-        return trader_action_prob
+        return market_action_prob, trader_action_prob
         
-    def train_trader_network(self, observation, action, reward, next_observation):
-        pass
 
-    def train_market_network(self):
+    def train_trader_network(self, batch):
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward)
+
+        state_action_values = self.trader_network(state_batch).gather(1, action_batch)
+        next_state_values = torch.zeros(batch_size, device = device)
+        with torch.no_grad():
+            next_state_values[non_final_mask] = self.trader_target_network(non_final_next_states).max(1).values
+        expected_state_action_values = (next_state_values * self.discount_factor) + reward_batch
+        
+        loss = self.trader_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+
+        self.trader_optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_value_(self.trader_network.parameters(), 100)
+        self.trader_optimizer.step()
+
+        # soft update of the target network's weights
+        target_net_state_dict = self.trader_target_network.state_dict()
+        policy_net_state_dict = self.trader_network.state_dict()
+        for key in policy_net_state_dict:
+            target_net_state_dict[key] = policy_net_state_dict[key] * target_update_rate + target_net_state_dict[key] * (1 - target_update_rate)
+        self.trader_target_network.load_state_dict(target_net_state_dict)
+
+    def train_market_network(self, observation, action, reward, next_observation, done):
         pass 
