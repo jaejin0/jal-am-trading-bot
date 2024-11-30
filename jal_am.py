@@ -8,18 +8,19 @@ class NeuralNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
         self.network = nn.Sequential(
-            nn.Linear(input_dim, 256, dtype=float),
+            nn.Linear(input_dim, 512),
             nn.Dropout(0.5),
             nn.ReLU(),
-            nn.Linear(256, 256, dtype=float),
+            nn.Linear(512, 512),
             nn.Dropout(0.5),
             nn.ReLU(),
-            nn.Linear(256, 32, dtype=float),
+            nn.Linear(512, 128),
             nn.Dropout(0.5),
             nn.ReLU(),
-            nn.Linear(32, output_dim, dtype=float),
+            nn.Linear(128, 32),
             nn.Dropout(0.5),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Linear(32, output_dim)
         )
 
     def forward(self, x):
@@ -60,12 +61,13 @@ class JAL_AM:
         self.trader_state_dim = trader_state_dim
         self.target_update_rate = target_update_rate
         self.discount_factor = discount_factor
+        self.device = torch.device('mps') 
 
-        self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim) # DQN with reinforcement learning
-        self.trader_target_network = NeuralNetowork(market_observation_dim + trader_state_dim + action_dim, action_dim)
+        self.trader_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim).to(self.device) # DQN with reinforcement learning
+        self.trader_target_network = NeuralNetwork(market_observation_dim + trader_state_dim + action_dim, action_dim).to(self.device)
         self.trader_target_network.load_state_dict(self.trader_network.state_dict())
 
-        self.market_network = NeuralNetwork(market_observation_dim, action_dim) # DQN with supervised learning
+        self.market_network = NeuralNetwork(market_observation_dim, action_dim).to(self.device) # DQN with supervised learning
 
         self.trader_optimizer = optim.AdamW(self.trader_network.parameters(), lr=learning_rate)
         self.trader_loss = nn.CrossEntropyLoss()
@@ -78,14 +80,14 @@ class JAL_AM:
         market_action_prob = self.market_network.forward(market_observation)
 
         # choose action based on observation and predicted other agent's action
-        observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0)
+        observation = torch.cat([market_observation, market_action_prob, trader_state], dim=0).to(self.device)
         trader_action_prob = self.trader_network.forward(observation)
         
         return market_action_prob, trader_action_prob
         
 
     def train_trader_network(self, batch):
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=device, dtype=torch.bool)
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=self.device, dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
 
         state_batch = torch.cat(batch.state)
@@ -93,14 +95,19 @@ class JAL_AM:
         reward_batch = torch.cat(batch.reward)
 
         state_action_values = self.trader_network(state_batch).gather(1, action_batch)
-        next_state_values = torch.zeros(batch_size, device = device)
+        next_state_values = torch.zeros(batch_size, device = self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.trader_target_network(non_final_next_states).max(1).values
         expected_state_action_values = (next_state_values * self.discount_factor) + reward_batch
         
         loss = self.trader_loss(state_action_values, expected_state_action_values.unsqueeze(1))
 
-        self.trader_optimizer.zero_grad()
+        self.trader_optimizer.zero_grad()  # self.model.train_trader_network()
+                # self.model.train_market_network()
+                # using reward, train trader_network
+                # using observation, perform supervised learning on market_network
+
+
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.trader_network.parameters(), 100)
         self.trader_optimizer.step()
@@ -112,5 +119,27 @@ class JAL_AM:
             target_net_state_dict[key] = policy_net_state_dict[key] * target_update_rate + target_net_state_dict[key] * (1 - target_update_rate)
         self.trader_target_network.load_state_dict(target_net_state_dict)
 
-    def train_market_network(self, observation, action, reward, next_observation, done):
-        pass 
+    def train_market_network(self, batch):
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=self.device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        next_state_batch = torch.cat(batch.next_state)
+
+        # reward_batch = torch.cat(batch.reward)
+
+        state_action_values = self.market_network(state_batch).gather(1, action_batch)
+
+        loss = self.market_loss(state_action_values, )
+
+        self.trader_optimizer.zero_grad()  # self.model.train_trader_network()
+                # self.model.train_market_network()
+                # using reward, train trader_network
+                # using observation, perform supervised learning on market_network
+
+
+        loss.backward()
+        torch.nn.utils.clip_grad_value_(self.trader_network.parameters(), 100)
+        self.trader_optimizer.step()
+

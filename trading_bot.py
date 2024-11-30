@@ -1,9 +1,11 @@
 import torch
 import numpy as np
-from collections import deque
+from collections import namedtuple, deque
 import random
 
 from jal_am import JAL_AM 
+
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 class ReplayBuffer:
     def __init__(self, buffer_size):
@@ -12,8 +14,8 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
-    def push(self, observation, action, reward, next_observation, done):
-        self.buffer.append([observation, action, reward, next_observation, done])
+    def push(self, transition):
+        self.buffer.append(transition)
 
     def sample(self, batch_size):
         return random.sample(self.buffer, batch_size)
@@ -31,7 +33,7 @@ Action Space: [
 
 '''
 class TradingBot:
-    def __init__(self, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor):
+    def __init__(self, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold):
         # model configuration
         self.model = JAL_AM(market_observation_feature_dim * market_observation_time_range, action_dim, trader_state_dim, learning_rate, target_update_rate, discount_factor) 
         self.market_observation_time_range = market_observation_time_range
@@ -39,6 +41,11 @@ class TradingBot:
         self.threshold = threshold
         self.transaction_fee = transaction_fee
         self.device = torch.device('mps')
+        self.batch_size = batch_size
+        self.exploration_parameter = exploration_parameter
+        self.exploration_end = exploration_end
+        self.exploration_decay = exploration_decay
+        self.market_prediction_threshold = market_prediction_threshold
 
         # trader state
         self.budget = budget
@@ -55,35 +62,41 @@ class TradingBot:
 
     def trade(self, market_data, train=False):
         self.market_data = market_data 
+        total_time = len(market_data)
         history = []
 
         market_observation, trader_state = self.reset()
         for t in range(len(market_data) - self.market_observation_time_range):
-            action = self.action(market_observation, trader_state)
-            
+            market_action_prob, action = self.action(market_observation, trader_state)
+            market_action = market_action_prob.argmax()
+
             next_market_observation, next_trader_state, reward, done = self.step(action) 
-           
-            if train:
-                # append data to trader buffer
+            next_market_action_prob, _ = self.model.policy(next_market_observation, next_trader_state)             
+            if train and len(self.market_buffer) >= self.batch_size and len(self.trader_buffer) >= self.batch_size:
+                market_reward = self.market_reward_function(market_observation, market_action, next_market_observation)
+
+                # append data to replay buffer
                 self.trader_buffer.push([
-                    torch.cat([market_observation, market_action_prob, trader_state], dim=0),
-                    action
+                    torch.cat((market_observation, market_action_prob, trader_state), dim=0),
+                    action,
                     reward,
-                    torch.cat([next_market_observation, market_action_prob, trader_state], dim=0)
-                    done
+                    torch.cat((next_market_observation, next_market_action_prob, next_trader_state), dim=0)
                 ])
-        
-                # self.model.train_trader_network()
-                # self.model.train_market_network()
-                # using reward, train trader_network
-                # using observation, perform supervised learning on market_network
-
-
+                self.market_buffer.push([
+                    market_observation,
+                    market_action,
+                    market_reward,
+                    next_market_observation
+                ])
+                
+                self.train()
+              
             # transition
             market_observation = next_market_observation
             trader_state = next_trader_state
 
-            if t % 100 == 0:
+            if t % 50000 == 0:
+                print(t, total_time, self.budget, self.coin_num)
                 history.append([self.budget, self.coin_num])
 
         return history
@@ -118,14 +131,19 @@ class TradingBot:
             print("ERROR FOUND")
         market_observation = self.market_data[self.timestep - self.market_observation_time_range + 1 : self.timestep + 1] 
         self.current_coin_price = (market_observation[-1][0] + market_observation[-1][3]) / 2 # average of opening price and closing price
-        market_observation = torch.from_numpy(market_observation).flatten() 
-        trader_state = torch.tensor([self.budget, self.coin_num]) 
+        market_observation = torch.from_numpy(market_observation).flatten().to(self.device) 
+        trader_state = torch.tensor([self.budget, self.coin_num]).to(self.device) 
         return market_observation, trader_state # seperated observation because market model doesn't observe trader_state 
 
     def action(self, market_observation, trader_state):
         market_action_prob, trader_action_prob = self.model.policy(market_observation, trader_state)
         trader_action = trader_action_prob.argmax()
-         
+        
+        exploit = random.random()
+        self.exploration_parameter = max(self.exploration_end, self.exploration_parameter * self.exploration_decay)
+        if exploit <= self.exploration_parameter:
+            action = np.random.choice(3)
+
         match trader_action.item(): # verify if the action is possible to perform. If not, replace with No-op
             case 0: # Buy a coin
                 possible_action = 0 if self.current_coin_price < self.budget else 2
@@ -134,8 +152,8 @@ class TradingBot:
             case _: # No-op
                 possible_action = 2
 
-        possible_action = torch.tensor(possible_action)
-        return possible_action
+        possible_action = torch.tensor(possible_action).to(self.device)
+        return market_action_prob, possible_action
 
     def reward_function(self, action):
         match action.item():
@@ -160,13 +178,39 @@ class TradingBot:
                 pass
         self.timestep += 1
 
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
     def train(self):
-        # sample from the replay buffer for each trader and market and train
-        # self.model.train_trader_network()
-        # self.model.train_market_network()
+        # train trader
+        trader_transitions = self.trader_buffer.sample(self.batch_size)
+        trader_batch = Transition(*zip(*trader_transitions))
+        self.model.train_trader_network(trader_batch)
 
-    def market_reward_function(self, action):
-        # gets positive reward?
-        # or look for the supervised learning method
-        
+        # train market
+        market_transitions = self.market_buffer.sample(self.batch_size)
+        market_batch = Transition(*zip(*market_transitions))
+        self.model.train_market_network(market_batch)
+
+    def market_reward_function(self, market_observation, market_action, next_market_observation):
+        market_change = (next_market_observation.item() - market_observation.item()) / market_observation.item()
+        if market_change > self.market_prediction_threshold: # Bull
+            match market_action.item():
+                case 0:
+                    reward = 1
+                case 1:
+                    reward = -1
+                case _:
+                    reward = 0
+        elif market_change < -self.market_prediction_threshold:
+            match market_action.item():
+                case 0:
+                    reward = -1
+                case 1:
+                    reward = 1
+                case _:
+                    reward = 0
+        else:
+            match market_action.item():
+                case 0 | 1:
+                    reward = 0
+                case _:
+                    reward = 1
+        return torch.tensor(reward)

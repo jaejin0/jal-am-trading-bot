@@ -2,14 +2,21 @@ import numpy as np
 import csv
 from trading_bot import TradingBot
 
-def main(training_file, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor):
+def main(training_files, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold):
     # read csv file
-    with open(training_file, 'r') as f:
-        reader = csv.reader(f)
-        train_data = list(reader)
-        train_data.reverse()
-        train_data = np.array(train_data)
-    
+    train_datas = [] 
+    for i in range(len(training_files)):
+        with open(training_files[i], 'r') as f:
+            reader = csv.reader(f)
+            train_data = list(reader)
+            train_data.reverse()
+            train_data = np.array(train_data)
+            train_data = train_data[:-1, 3:]
+            train_data = train_data.astype(np.float32) 
+
+        train_datas.append(train_data)
+    train_datas = np.array(train_datas)
+
     with open(test_file, 'r') as f:
         reader = csv.reader(f)
         test_data = list(reader)
@@ -17,23 +24,26 @@ def main(training_file, test_file, market_observation_feature_dim, market_observ
         test_data = np.array(test_data)
     
     # process numpy matrix
-    train_data = train_data[:-1, 3:]
-    train_data = train_data.astype(float) 
     test_data = test_data[:-1, 3:]
-    test_data = test_data.astype(float)
+    test_data = test_data.astype(np.float32)
     
     # create JAL-AM model
-    trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor) 
+    trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold) 
     
     # train
-    result = trader.trade(train_data, train=True)
-    display_result(result)
+    for iteration in range(5):
+        for i in range(len(training_files)):
+            print("ITERATION: ", iteration)
+            result = trader.trade(train_datas[i], train=True)
+            # display_result(result) 
 
     # evaluate
-    # result = trader.trade(test_data, train=False)
+    result = trader.trade(test_data, train=False)
     # display_result(result)
 
 def display_result(result):
+    
+    print("RESULT")
     for r in result:
         print(r)
     # print final budget, number of coin holding, and total networth
@@ -59,13 +69,14 @@ if __name__ == '__main__':
     '''
 
     # configuration
-    training_file = dataset_dir + dataset[1]
-    test_file = dataset_dir + dataset[0]
+    # bitcoin price in 2017 and 2021 are extraordinary
+    training_files = [dataset_dir + dataset[3], dataset_dir + dataset[4]]
+    test_file = dataset_dir + dataset[5]
     market_observation_feature_dim = 6 # open, high, low, close, Volume BTC, Volume USD
     market_observation_time_range = 10 # observe most recent 30 timesteps
     action_dim = 3 # Buy, Sell, No-op
     trader_state_dim = 2 # budget, coin_num
-    budget = 10000
+    budget = 100000
     threshold = 10
     transaction_fee = 1
 
@@ -73,5 +84,9 @@ if __name__ == '__main__':
     learning_rate = 0.001
     target_update_rate = 0.005
     discount_factor = 0.99
-
-    main(training_file, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor)
+    batch_size = 128
+    exploration_parameter = 1.0
+    exploration_end = 0.001
+    exploration_decay = 0.99999
+    market_prediction_threshold = 0.001 # 0.1% up/down in market will be treated as buy/sell
+    main(training_files, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold)
