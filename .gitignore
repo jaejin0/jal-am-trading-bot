@@ -1,6 +1,7 @@
 .DS_Store
 dataset/
 logs/
+models/
 __pycache__
 *.swp
 test.py
