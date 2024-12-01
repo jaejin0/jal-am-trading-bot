@@ -98,10 +98,11 @@ class TradingBot:
             market_observation = next_market_observation
             trader_state = next_trader_state
 
-            if t % 50000 == 0:
-                print("[CURRENT STATE]")
-                print(f"timestep: {t}/{total_time}, current budget: {self.budget}, current holding coins: {self.coin_num}, market_price: {market_observation}")
-                # history.append([self.budget, self.coin_num])
+            
+            # print("[CURRENT STATE]")
+            # print(f"timestep: {t}/{total_time}, current budget: {self.budget}, current holding coins: {self.coin_num}, market_price: {market_observation}")
+            history.append([t, total_time, self.budget, self.coin_num, (market_observation[0] + market_observation[3]) / 2, self.budget + self.coin_num * ((market_observation[0] + market_observation[3]) / 2), self.exploration_parameter, reward.item()])
+
 
         return history
 
