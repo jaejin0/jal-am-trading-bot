@@ -194,7 +194,6 @@ class TradingBot:
         market_batch = Transition(*zip(*market_transitions))
         self.model.train_market_network(market_batch)
 
-        print("model learned")
 
     def market_reward_function(self, market_observation, market_action, next_market_observation):
         market_change = (((next_market_observation[0] + next_market_observation[3]) / 2) - ((market_observation[0] + market_observation[3]) / 2)) / ((market_observation[0] + market_observation[3]) / 2)
