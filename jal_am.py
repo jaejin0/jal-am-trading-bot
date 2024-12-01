@@ -148,3 +148,7 @@ class JAL_AM:
         for key in policy_net_state_dict:
             target_net_state_dict[key] = policy_net_state_dict[key] * self.target_update_rate + target_net_state_dict[key] * (1 - self.target_update_rate)
         self.market_target_network.load_state_dict(target_net_state_dict) 
+    
+    def save_model(self, model_dir, iteration):
+        torch.save(self.market_network.state_dict(), f"{model_dir}market_network_iteration[{iteration}]")
+        torch.save(self.trader_network.state_dict(), f"{model_dir}trader_network_iteration[{iteration}]")

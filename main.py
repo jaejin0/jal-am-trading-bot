@@ -2,7 +2,7 @@ import numpy as np
 import csv
 from trading_bot import TradingBot
 
-def main(training_files, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, log_dir):
+def main(training_files, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, log_dir, model_dir):
     # read csv file
     train_datas = [] 
     for i in range(len(training_files)):
@@ -32,28 +32,37 @@ def main(training_files, test_file, market_observation_feature_dim, market_obser
     test_data = test_data.astype(np.float32)
     
     # create JAL-AM model
-    trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold) 
+    trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, model_dir) 
 
     # train
-    print("training loop starts...")
+    print("\ntraining loop starts...")
     for iteration in range(5):
         for i in range(len(training_files)):
-            print(f"iteration step: {iteration} | training_file {i} out of {len(training_files)}")
+            print(f"\niteration step: {iteration} | training_file {i} out of {len(training_files)}")
             result = trader.trade(train_datas[i], train=True)
+            print("trading is done!\n")
+            
+            print("saving starts...")
             save_result(log_dir, result, True, iteration, i)      
-
+            print("saving is done!")
+            
+            trader.save_model(iteration)
+            print("model is saved!")
     # evaluate
-    print("evaluating loop starts...")
+    print("\nevaluating loop starts...")
     result = trader.trade(test_data, train=False)
+    print("trading is done!\n")
+    print("saving starts...")
     save_result(log_dir, result, False, None, None)
-
+    print("saving is done!")
+    
 def save_result(log_dir, result, train, iteration, file):
     
     if train:
-        filename = log_dir + "train_iter" + iteration + "_file" + file + ".csv"
+        filename = f"{log_dir}train_iter[{iteration}]_file[{file}].csv"
     else:
-        filename = log_idr + "eval.csv"
-
+        filename = f"{log_dir}eval.csv"
+    
     with open(filename, 'w', newline='') as csvfile:
         fieldnames = ['timestep', 'total_time', 'budget', 'coin_num', 'current_market_price', 'net_worth', 'exploration_parameter', 'reward']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -92,9 +101,9 @@ if __name__ == '__main__':
     1646092800,2022-03-01 00:00:00,BTC/USD,43221.71,43626.49,43185.48,43185.48,49.00628870,2116360.1005280763
     '''
     
-    # log
+    # directories
     log_dir = "./logs/"
-    
+    model_dir = "./models/"
 
     # configuration
     # bitcoin price in 2017 and 2021 are extraordinary
@@ -117,4 +126,5 @@ if __name__ == '__main__':
     exploration_end = 0.001
     exploration_decay = 0.99999
     market_prediction_threshold = 0.001 # 0.1% up/down in market will be treated as buy/sell
-    main(training_files, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, log_dir)
+
+    main(training_files, test_file, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, log_dir, model_dir)

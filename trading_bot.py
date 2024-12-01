@@ -33,7 +33,7 @@ Action Space: [
 
 '''
 class TradingBot:
-    def __init__(self, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold):
+    def __init__(self, market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, model_dir):
         # model configuration
         self.model = JAL_AM(market_observation_feature_dim * market_observation_time_range, action_dim, trader_state_dim, learning_rate, target_update_rate, discount_factor, batch_size) 
         self.market_observation_time_range = market_observation_time_range
@@ -46,6 +46,7 @@ class TradingBot:
         self.exploration_end = exploration_end
         self.exploration_decay = exploration_decay
         self.market_prediction_threshold = market_prediction_threshold
+        self.model_dir = model_dir
 
         # trader state
         self.budget = budget
@@ -69,7 +70,7 @@ class TradingBot:
         history = []
 
         market_observation, trader_state = self.reset()
-        for t in range(len(market_data) - self.market_observation_time_range):
+        for t in range(20): # len(market_data) - self.market_observation_time_range):
             market_action_prob, action = self.action(market_observation, trader_state)
             market_action = market_action_prob.argmax()
 
@@ -101,7 +102,7 @@ class TradingBot:
             
             # print("[CURRENT STATE]")
             # print(f"timestep: {t}/{total_time}, current budget: {self.budget}, current holding coins: {self.coin_num}, market_price: {market_observation}")
-            history.append([t, total_time, self.budget, self.coin_num, (market_observation[0] + market_observation[3]) / 2, self.budget + self.coin_num * ((market_observation[0] + market_observation[3]) / 2), self.exploration_parameter, reward.item()])
+            history.append([t, total_time, self.budget, self.coin_num, (market_observation[0].item() + market_observation[3].item()) / 2, self.budget + self.coin_num * ((market_observation[0].item() + market_observation[3].item()) / 2), self.exploration_parameter, reward.item()])
 
 
         return history
@@ -220,3 +221,6 @@ class TradingBot:
                 case _:
                     reward = 1
         return torch.tensor([reward]).to(self.device)
+
+    def save_model(self, iteration):
+        self.model.save_model(self.model_dir, iteration)
