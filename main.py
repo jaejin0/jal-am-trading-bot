@@ -17,12 +17,16 @@ def main(training_files, test_file, market_observation_feature_dim, market_obser
         train_datas.append(train_data)
     train_datas = np.array(train_datas)
 
+    print("training files are successfully read")
+
     with open(test_file, 'r') as f:
         reader = csv.reader(f)
         test_data = list(reader)
         test_data.reverse()
         test_data = np.array(test_data)
     
+    print("test file is successfully read")
+
     # process numpy matrix
     test_data = test_data[:-1, 3:]
     test_data = test_data.astype(np.float32)
@@ -30,13 +34,15 @@ def main(training_files, test_file, market_observation_feature_dim, market_obser
     # create JAL-AM model
     trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold) 
     
+    print("training loop starts...")
     # train
     for iteration in range(5):
         for i in range(len(training_files)):
-            print("ITERATION: ", iteration)
+            print(f"iteration step: {iteration} | training_file {i} out of {len(training_files)}")
             result = trader.trade(train_datas[i], train=True)
-            # display_result(result) 
+            display_result(result) 
 
+    print("evaluating loop starts...")
     # evaluate
     result = trader.trade(test_data, train=False)
     # display_result(result)
@@ -78,13 +84,13 @@ if __name__ == '__main__':
     trader_state_dim = 2 # budget, coin_num
     budget = 100000
     threshold = 10
-    transaction_fee = 1
+    transaction_fee = 0
 
     buffer_size = 100000
     learning_rate = 0.001
     target_update_rate = 0.005
     discount_factor = 0.99
-    batch_size = 128
+    batch_size = 4 #128
     exploration_parameter = 1.0
     exploration_end = 0.001
     exploration_decay = 0.99999

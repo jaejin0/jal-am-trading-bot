@@ -1,15 +1,11 @@
-import numpy as np
+import torch
 
-data = [[0, 0, 0, 0],
-        [1, 1, 1, 1],
-        [2, 2, 2, 2],
-        [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [5, 5, 5, 5]]
+t = 0.1
 
-data = np.array(data)
+a = torch.tensor([[1, 2, 3],
+                 [4, 5, 6]])
 
-timestep = 4
-time_range = 2
+b = torch.tensor([[10, 20, 30],[40, 50, 60]])
 
-print(data[timestep - time_range +1: timestep + 100])
+
+print(a / b)
