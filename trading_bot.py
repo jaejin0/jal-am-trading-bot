@@ -70,7 +70,7 @@ class TradingBot:
         history = []
 
         market_observation, trader_state = self.reset()
-        for t in range(20): # len(market_data) - self.market_observation_time_range):
+        for t in range(len(market_data) - self.market_observation_time_range):
             market_action_prob, action = self.action(market_observation, trader_state)
             market_action = market_action_prob.argmax()
 
@@ -94,7 +94,9 @@ class TradingBot:
                 
             if train and len(self.market_buffer) >= self.batch_size and len(self.trader_buffer) >= self.batch_size:
                 self.train()
-              
+
+            self.print_progress_bar(t, total_time)
+
             # transition
             market_observation = next_market_observation
             trader_state = next_trader_state
@@ -224,3 +226,27 @@ class TradingBot:
 
     def save_model(self, iteration):
         self.model.save_model(self.model_dir, iteration)
+
+    def print_progress_bar(self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+        """
+        Call in a loop to create terminal progress bar
+        @params:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+        """
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+        # Print New Line on Complete
+        if iteration == total:
+            print()
+
+    def load_model(self, iteration):
+        self.model.load_model(self.model_dir, iteration)

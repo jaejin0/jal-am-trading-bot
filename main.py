@@ -35,33 +35,36 @@ def main(training_files, test_file, market_observation_feature_dim, market_obser
     trader = TradingBot(market_observation_feature_dim, market_observation_time_range, action_dim, trader_state_dim, budget, threshold, transaction_fee, buffer_size, learning_rate, target_update_rate, discount_factor, batch_size, exploration_parameter, exploration_end, exploration_decay, market_prediction_threshold, model_dir) 
 
     # train
-    print("\ntraining loop starts...")
-    for iteration in range(5):
-        for i in range(len(training_files)):
-            print(f"\niteration step: {iteration} | training_file {i} out of {len(training_files)}")
-            result = trader.trade(train_datas[i], train=True)
-            print("trading is done!\n")
+    # print("\ntraining loop starts...")
+    # for iteration in range(3):
+    #     for i in range(len(training_files)):
+    #         print(f"\niteration step: {iteration} | training_file {i} out of {len(training_files)}")
+    #         result = trader.trade(train_datas[i], train=True)
             
-            print("saving starts...")
-            save_result(log_dir, result, True, iteration, i)      
-            print("saving is done!")
+    #         print("saving starts...")
+    #         save_result(log_dir, result, True, iteration, i)      
+    #         print("saving is done!")
             
-            trader.save_model(iteration)
-            print("model is saved!")
-    # evaluate
-    print("\nevaluating loop starts...")
-    result = trader.trade(test_data, train=False)
-    print("trading is done!\n")
-    print("saving starts...")
-    save_result(log_dir, result, False, None, None)
-    print("saving is done!")
+    #         trader.save_model(iteration)
+    #         print("model is saved!")
     
+    # evaluate
+    for i in range(2):
+        print("loading a model for ", i)
+        trader.load_model(i) 
+        print("\nevaluating loop starts...")
+        result = trader.trade(test_data, train=False)
+        print("trading is done!\n")
+        print("saving starts...")
+        save_result(log_dir, result, False, i, None)
+        print("saving is done!")
+        
 def save_result(log_dir, result, train, iteration, file):
     
     if train:
         filename = f"{log_dir}train_iter[{iteration}]_file[{file}].csv"
     else:
-        filename = f"{log_dir}eval.csv"
+        filename = f"{log_dir}eval_iter[{iteration}].csv"
     
     with open(filename, 'w', newline='') as csvfile:
         fieldnames = ['timestep', 'total_time', 'budget', 'coin_num', 'current_market_price', 'net_worth', 'exploration_parameter', 'reward']
@@ -121,7 +124,7 @@ if __name__ == '__main__':
     learning_rate = 0.001
     target_update_rate = 0.005
     discount_factor = 0.99
-    batch_size = 4 #128
+    batch_size = 128
     exploration_parameter = 1.0
     exploration_end = 0.001
     exploration_decay = 0.99999
