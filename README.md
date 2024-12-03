@@ -9,6 +9,9 @@ So in the trading market, where it is basically a Zero Sum game, we can create a
 
 Action space : Buy 1 Bitcoin, Sell 1 Bitcoin, No-op
 
+## Report in journal format
+[Bitcoin Trading Bot with Joint Action Learning with Agent Modeling](https://drive.google.com/file/d/1Ff6rtFYkC0wnZgaej0e1jwzGIjupAS5E/view?usp=sharing)
+
 
 ## Source
 [Multi-Agent Reinforcement Learning Book](https://www.marl-book.com/)
